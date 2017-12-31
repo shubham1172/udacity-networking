@@ -61,14 +61,14 @@ class LearningSwitch(DynamicPolicy):
         self.query = new_pkts
 
         # Initialize the policy
-        self.push_rules() 
+        self.push_rules()
 
 
     def print_switch_tables(self):
         for entry in self.fwd_table.keys():
             print "Switch " + str(entry)
             for fwd_rule in self.fwd_table[entry].keys():
-                print "   %s : %s" % (str(fwd_rule), 
+                print "   %s : %s" % (str(fwd_rule),
                                       str(self.fwd_table[entry][fwd_rule]))
         print "----------------"
 
@@ -88,12 +88,13 @@ class LearningSwitch(DynamicPolicy):
     def learn_route(self, pkt):
         """  This function adds new routes into the fowarding table. """
 
-        # TODO - create a new entry in the fowarding table.
+        # create a new entry in the fowarding table.
         # Adding a new route should be
         #    self.fwd_table['s1'][mac_addr] = port
         # You must extract the correct pieces from the packet to populate
-        # the forwarding table. 
-
+        # the forwarding table.
+        
+	self.fwd_table[str(get_switch(pkt))][get_src_mac(pkt)] = get_inport(pkt)
 
         # print out the switch tables:
         self.print_switch_tables()
@@ -108,16 +109,16 @@ class LearningSwitch(DynamicPolicy):
     def push_rules(self):
         new_policy = None
         not_flood_pkts = None
-        
+
         for entry in self.fwd_table.keys():
             for fwd_rule in self.fwd_table[entry].keys():
                 if new_policy == None:
-                    new_policy = (match(switch=int(entry), dstmac=fwd_rule) >> 
+                    new_policy = (match(switch=int(entry), dstmac=fwd_rule) >>
                                   fwd(self.fwd_table[entry][fwd_rule]))
                 else:
-                    new_policy += (match(switch=int(entry), dstmac=fwd_rule) >> 
+                    new_policy += (match(switch=int(entry), dstmac=fwd_rule) >>
                                    fwd(self.fwd_table[entry][fwd_rule]))
-                
+
                 if not_flood_pkts == None:
                     not_flood_pkts = (match(switch=int(entry), dstmac=fwd_rule))
                 else:
@@ -128,7 +129,7 @@ class LearningSwitch(DynamicPolicy):
             self.policy = self.flood + self.query
         else:
             self.policy = if_(not_flood_pkts, new_policy, self.flood) + self.query
-        
+
         # The following line can be uncommented to see your policy being
         # built up, say during a flood period. When submitting your completed
         # code, be sure to comment it out!
